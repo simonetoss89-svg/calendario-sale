@@ -146,6 +146,17 @@ export default function Header({
 >
   📊 Statistiche
 </button>
+<button
+  onClick={() => {
+    localStorage.removeItem("accesso");
+    window.location.reload();
+  }}
+  className="bg-red-500 text-white px-3 py-2 rounded-xl"
+>
+  Esci
+</button>
+
+
 
       </div>
 

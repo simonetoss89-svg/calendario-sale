@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import Header from "./components/Header";
 import Dashboard from "./pages/Dashboard";
@@ -10,7 +9,12 @@ import Statistiche from "./components/Statistiche";
 
 export default function App() {
 
-  
+const [autenticato, setAutenticato] = useState(
+  localStorage.getItem("accesso") === "ok"
+);
+const [password, setPassword] = useState("");
+
+
   const [ultimoNumeroPrenotazione,
   setUltimoNumeroPrenotazione] =
   useState(() => {
@@ -369,23 +373,6 @@ setMostraConferma(true);
 
   return;
 }   
-
-// ==========================
-// BLOCCO RICORRENZA + MULTIFASCIA
-// ==========================
-
-/*  if (
-  ricorrente &&
-  fasceSelezionate.length > 1
-) {
-
-  alert(
-    "Le prenotazioni ricorrenti possono essere create con una sola fascia oraria."
-  );
-
-  return;
-
-} */
   
   // ==========================
   // PRENOTAZIONE RICORRENTE
@@ -777,9 +764,99 @@ setDatiConferma({
     "prenotazione"
   );
 }
-  
+
+{/* login accesso al sito */}
+
+const PASSWORD_APP = "OratorioMarco2026";
+if (!autenticato) {
 
   return (
+    <div className="min-h-screen bg-slate-100 flex items-center justify-center">
+
+  <div className="bg-white p-8 rounded-3xl shadow-xl w-full max-w-md">
+
+    <div className="flex flex-col items-center mb-6">
+
+      <img
+        src="/Logo-oratorio.png"
+        alt="Logo Oratorio"
+        className="w-25 h-20 mb-4"
+      />
+
+      <h1 className="text-3xl font-bold text-center text-green-700">
+        Calendario Sale
+      </h1>
+
+      <p className="text-slate-500 text-center mt-2">
+        Oratorio Parrocchiale di Marco
+      </p>
+
+    </div>
+
+    <input
+      type="password"
+      placeholder="Inserisci la password"
+      value={password}
+      onChange={(e) => setPassword(e.target.value)}
+      className="
+        w-full
+        border
+        rounded-xl
+        p-3
+        mb-4
+        focus:outline-none
+        focus:ring-2
+        focus:ring-green-500
+      "
+      onKeyDown={(e) => {
+        if (
+          e.key === "Enter" &&
+          password === PASSWORD_APP
+        ) {
+          localStorage.setItem("accesso", "ok");
+          setAutenticato(true);
+        }
+      }}
+    />
+
+    <button
+      onClick={() => {
+        if (password === PASSWORD_APP) {
+          localStorage.setItem("accesso", "ok");
+          setAutenticato(true);
+        } else {
+          alert("Password errata");
+        }
+      }}
+      className="
+        w-full
+        bg-green-600
+        text-white
+        p-3
+        rounded-xl
+        font-semibold
+        shadow-md
+        transition-all
+        duration-200
+        hover:bg-green-700
+        hover:scale-[1.02]
+        active:scale-95
+      "
+    >
+      Accedi
+    </button>
+
+    <p className="text-xs text-slate-400 text-center mt-4">
+      Accesso riservato ai collaboratori autorizzati
+    </p>
+
+  </div>
+
+</div>
+  );
+}
+
+return (
     <div className="min-h-screen bg-slate-50 p-6">
      
       <div className="max-w-4xl mx-auto">
