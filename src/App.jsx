@@ -16,19 +16,6 @@ const [autenticato, setAutenticato] = useState(
 const [password, setPassword] = useState("");
 
 
-  const [ultimoNumeroPrenotazione,
-  setUltimoNumeroPrenotazione] =
-  useState(() => {
-
-    const salvato =
-      localStorage.getItem(
-        "ultimoNumeroPrenotazione"
-      );
-
-    return salvato
-      ? Number(salvato)
-      : 0;
-  });
 
 const [pagina, setPagina] =
   useState("dashboard");
@@ -56,9 +43,6 @@ const [pagina, setPagina] =
 
 const [erroreRicorrenza,
   setErroreRicorrenza] =
-  useState("");
-
-const [filtroSala, setFiltroSala] =
   useState("");
 
   const fasceOrarie = [
@@ -98,23 +82,32 @@ const [dataFineRicorrenza,
   setDataFineRicorrenza] =
   useState("");
 
-  const [prenotazioni, setPrenotazioni] = useState(() => {
-    const datiSalvati =
-    localStorage.getItem("prenotazioni");
-  
-    return datiSalvati
-    ? JSON.parse(datiSalvati)
-    : [];
-});
+  const [prenotazioni, setPrenotazioni] =
+  useState([]);
 
   useEffect(() => {
-    localStorage.setItem(
-      "prenotazioni",
-      JSON.stringify(prenotazioni)
-    );
-  }, [prenotazioni]);
+  async function caricaPrenotazioni() {
 
-  
+    const { data, error } =
+      await supabase
+        .from("prenotazioni")
+        .select("*")
+        .order("data");
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    
+
+  setPrenotazioni(data);
+  }
+
+  caricaPrenotazioni();
+}, []);
+
+ 
 
   function giornoSettimana(data) {
     const giorni = [
@@ -238,18 +231,6 @@ function trovaStessaOccorrenza(
   return oggi;
 }
 
-function fineSettimana() {
-  const fine = new Date(
-    inizioSettimana()
-  );
-
-  fine.setDate(
-    fine.getDate() + 6
-  );
-
-  return fine;
-}
-
 {/* nuova funzione settimane giuste tabella */}
 
   function giorniSettimana() {
@@ -285,10 +266,18 @@ function fineSettimana() {
   setPagina("prenotazione");
 } 
   
+function pulisciTesto(testo) {
+  return testo
+    .replace(/[<>]/g, "")
+    .trim()
+    .slice(0, 500);
+}
 
 
+  async function confermaPrenotazione() {
 
-  function confermaPrenotazione() {
+const notePulite =
+  pulisciTesto(note);
 
 
     if (
@@ -330,29 +319,31 @@ function fineSettimana() {
 
 if (indiceModifica !== null) {
 
-  const prenotazioniAggiornate =
-    prenotazioni.map((p) => {
+  const { error } = await supabase
+  .from("prenotazioni")
+  .update({
+    gruppo,
+    stanza,
+    data: dataPrenotazione,
+    fasciaOraria,
+    note,
+  })
+  .eq("id", indiceModifica);
 
-      if (p.id === indiceModifica) {
+if (error) {
+  console.error(error);
+  alert("Errore durante la modifica");
+  return;
+}
 
-        return {
-          ...p,
-          gruppo,
-          stanza,
-          data: dataPrenotazione,
-          fasciaOraria,
-          note,
-        };
+const { data } = await supabase
+  .from("prenotazioni")
+  .select("*")
+  .order("data", { ascending: true });
 
-      }
+setPrenotazioni(data);
 
-      return p;
-
-    });
-
-  setPrenotazioni(
-    prenotazioniAggiornate
-  );
+  
   setDatiConferma({
   id: indiceModifica,
   gruppo,
@@ -421,11 +412,6 @@ if (dataFine < dataInizio) {
   dataCorrente <= dataFine
 ) {
 
-  const nuovoNumero =
-    ultimoNumeroPrenotazione +
-    nuovePrenotazioni.length +
-    1;
-
 
   const anno =
   dataCorrente.getFullYear();
@@ -471,16 +457,11 @@ const dataFormattata =
     } else {
 
       nuovePrenotazioni.push({
-        id:
-          ultimoNumeroPrenotazione +
-          nuovePrenotazioni.length +
-          1,
-
         gruppo,
         stanza,
         data: dataFormattata,
         fasciaOraria: fascia,
-        note,
+        note: notePulite,
 
         ricorrente: true,
 
@@ -574,28 +555,43 @@ if (conflitti.length > 0) {
 
 }
 
-setPrenotazioni([
-  ...prenotazioni,
-  ...nuovePrenotazioni,
-]);
+const {
+  data: prenotazioniCreate,
+  error
+} = await supabase
+  .from("prenotazioni")
+  .insert(
+    nuovePrenotazioni.map(p => ({
+      gruppo: p.gruppo,
+      stanza: p.stanza,
+      data: p.data,
+      fasciaOraria: p.fasciaOraria,
+      note: p.note,
+      ricorrente: p.ricorrente,
+      multifascia: p.multifascia
+    }))
+  )
+  .select();
 
-setUltimoNumeroPrenotazione(
-  ultimoNumeroPrenotazione +
-  nuovePrenotazioni.length
-);
+if (error) {
+  console.error(error);
+  alert("Errore durante il salvataggio");
+  return;
+}
 
-localStorage.setItem(
-  "ultimoNumeroPrenotazione",
-  ultimoNumeroPrenotazione +
-  nuovePrenotazioni.length
-);
+const { data } = await supabase
+  .from("prenotazioni")
+  .select("*")
+  .order("data");
+
+setPrenotazioni(data);
 
 
 
 // fine del while per creare prenotazioni ricorrenti
   
  setDatiConferma({
-  id: nuovePrenotazioni[0].id,
+  id: prenotazioniCreate[0].id,
   gruppo,
   stanza,
   fasciaOraria,
@@ -639,14 +635,11 @@ const nuovePrenotazioni =
   fasceSelezionate.map(
     (fascia, index) => ({
 
-      id:
-    ultimoNumeroPrenotazione +
-    index +1,
   gruppo,
   stanza,
   data: dataPrenotazione,
   fasciaOraria: fascia,
-  note,
+  note: notePulite,
   ricorrente: false,
   multifascia:
     fasceSelezionate.length > 1,
@@ -654,25 +647,40 @@ const nuovePrenotazioni =
 })
   );
 
-setPrenotazioni([
-  ...prenotazioni,
-  ...nuovePrenotazioni,
-]);
+const {
+  data: prenotazioniCreate,
+  error
+} = await supabase
+  .from("prenotazioni")
+  .insert(
+    nuovePrenotazioni.map(p => ({
+      gruppo: p.gruppo,
+      stanza: p.stanza,
+      data: p.data,
+      fasciaOraria: p.fasciaOraria,
+      note: p.note,
+      ricorrente: p.ricorrente,
+      multifascia: p.multifascia
+    }))
+  )
+  .select();
 
+if (error) {
+  console.error(error);
+  alert("Errore durante il salvataggio");
+  return;
+}
 
-setUltimoNumeroPrenotazione(
-  ultimoNumeroPrenotazione +
-  nuovePrenotazioni.length
-);
+const { data } = await supabase
+  .from("prenotazioni")
+  .select("*")
+  .order("data");
 
-localStorage.setItem(
-  "ultimoNumeroPrenotazione",
-  ultimoNumeroPrenotazione +
-  nuovePrenotazioni.length
-);
+setPrenotazioni(data);
+
 
 setDatiConferma({
-  id: nuovePrenotazioni[0].id,
+  id: prenotazioniCreate[0].id,
   gruppo,
   stanza,
   data: dataPrenotazione,
@@ -709,7 +717,7 @@ setDatiConferma({
   // ==========================
 
 
-  function eliminaPrenotazione(
+  async function eliminaPrenotazione(
   idDaEliminare
 ) {
 
@@ -720,17 +728,27 @@ setDatiConferma({
 
   if (!conferma) return;
 
-  const nuovePrenotazioni =
-    prenotazioni.filter(
-      (prenotazione) =>
-        prenotazione.id !==
-        idDaEliminare
+  const { error } =
+    await supabase
+      .from("prenotazioni")
+      .delete()
+      .eq("id", idDaEliminare);
+
+  if (error) {
+    console.error(error);
+    alert(
+      "Errore durante l'eliminazione"
     );
+    return;
+  }
 
-  setPrenotazioni(
-    nuovePrenotazioni
-  );
+  const { data } =
+    await supabase
+      .from("prenotazioni")
+      .select("*")
+      .order("data");
 
+  setPrenotazioni(data);
 }
 // ==========================
   // modifica PRENOTAZIONE
@@ -923,8 +941,7 @@ return (
       giornoSettimana={giornoSettimana}
       eliminaPrenotazione={ eliminaPrenotazione}
       modificaPrenotazione={modificaPrenotazione}
-      ultimoNumeroPrenotazione={ultimoNumeroPrenotazione}
-    />
+          />
   </>
 
 )}
@@ -1001,18 +1018,21 @@ return (
 
     <div className="mt-2 max-h-40 overflow-y-auto">
 
-      {datiConferma.elencoDate.map(
-        (data) => (
-
-          <div key={data}>
-            • {new Date(data)
-              .toLocaleDateString(
-                "it-IT"
-              )}
-          </div>
-
-        )
-      )}
+     {[...new Set(datiConferma.elencoDate)]
+  .map((data) => (
+    <div key={data}>
+      • {new Date(data)
+        .toLocaleDateString(
+          "it-IT",
+          {
+            weekday: "short",
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+          }
+        )}
+    </div>
+))}
 
     </div>
 

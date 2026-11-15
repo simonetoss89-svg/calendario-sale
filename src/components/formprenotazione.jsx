@@ -385,10 +385,16 @@ export default function FormPrenotazione({
     onChange={(e) =>
       setNote(e.target.value)
     }
+    maxLength={500}
+
     placeholder="Inserisci eventuali note..."
     className="w-full border rounded p-2 mt-1"
     rows={3}
   />
+  <p className="text-xs text-slate-500 mt-1">
+{note.length}/500 caratteri
+</p>
+
 </div>
             </div>
 
