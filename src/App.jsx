@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { supabase } from "./supabase";
 import Header from "./components/Header";
 import Dashboard from "./pages/Dashboard";
 import FormPrenotazione from "./components/formprenotazione";
@@ -112,6 +113,8 @@ const [dataFineRicorrenza,
       JSON.stringify(prenotazioni)
     );
   }, [prenotazioni]);
+
+  
 
   function giornoSettimana(data) {
     const giorni = [
