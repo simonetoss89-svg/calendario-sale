@@ -52,12 +52,43 @@ dataFine.setHours(
       }
     );
 
-  const eventiOrdinati =
-    [...eventiSettimana].sort(
-      (a, b) =>
+    const ordineFasce = {
+  "08:00 - 12:00": 1,
+  "12:00 - 16:00": 2,
+  "16:00 - 19:00": 3,
+  "19:00 - 24:00": 4,
+};
+
+
+const eventiOrdinati =
+  [...eventiSettimana].sort(
+    (a, b) => {
+
+      const confrontoData =
         new Date(a.data) -
-        new Date(b.data)
-    );
+        new Date(b.data);
+
+      if (confrontoData !== 0) {
+        return confrontoData;
+      }
+
+      const confrontoSala =
+        a.stanza.localeCompare(
+          b.stanza
+        );
+
+      if (confrontoSala !== 0) {
+        return confrontoSala;
+      }
+
+      return (
+        ordineFasce[a.fasciaOraria] -
+        ordineFasce[b.fasciaOraria]
+      );
+    }
+  );
+
+
 const dateSettimana = [];
 
 for (let i = 0; i < 8; i++) {
@@ -153,6 +184,14 @@ function coloreGruppo(gruppo) {
           .toDateString() ===
         giorno.toDateString()
     );
+
+    const sale =
+  [...new Set(
+    eventiGiorno.map(
+      evento => evento.stanza
+    )
+  )];
+
   const eOggi =
   giorno.toDateString() ===
   new Date().toDateString();
@@ -181,13 +220,11 @@ const eDomani =
   }
 >
   {eOggi
-  ? "OGGI"
+  ? `📍 OGGI - ${nomiGiorni[giorno.getDay()]} ${giorno.getDate()}`
   : eDomani
-  ? "DOMANI"
-  : nomiGiorni[giorno.getDay()]}
-
-{" "}
-{giorno.getDate()}
+  ? `⏭️ DOMANI - ${nomiGiorni[giorno.getDay()]} ${giorno.getDate()}`
+  : `📅 ${nomiGiorni[giorno.getDay()]} ${giorno.getDate()}`
+}
 </h3>
 
       {eventiGiorno.length === 0 ? (
@@ -198,39 +235,67 @@ const eDomani =
 
       ) : (
 
-        eventiGiorno.map(
-          (evento, indice) => (
+       sale.map((sala) => {
 
-            <div
-  key={indice}
-  className={`
-    ${coloreGruppo(evento.gruppo)}
-    rounded-lg p-3 mb-2
-  `}
->
+  const eventiSala =
+    eventiGiorno.filter(
+      evento =>
+        evento.stanza === sala
+    );
 
-              <div className="font-bold">
-                {evento.gruppo}
-              </div>
+  return (
 
-              <div>
-                {evento.stanza}
-              </div>
+    <div
+      key={sala}
+      className="mb-4"
+    >
 
-              <div>
-                {evento.fasciaOraria}
-              </div>
-              {evento.note && (
-              <div className="text-sm text-slate-600 mt-2 italic">
-               📝 {evento.note}
-                </div>
-                  )}
+      <h4 className="
+  bg-slate-100
+  rounded-lg
+  px-3
+  py-2
+  font-semibold
+  text-slate-700
+  mb-2
+">
+  🏠 {sala}
+</h4>
 
+      {eventiSala.map(
+        (evento, indice) => (
+
+          <div
+            key={indice}
+            className={`
+              ${coloreGruppo(evento.gruppo)}
+              rounded-lg p-3 mb-2
+            `}
+          >
+
+            <div className="font-bold">
+              {evento.gruppo}
             </div>
 
-          )
-        )
+            <div>
+              {evento.fasciaOraria}
+            </div>
 
+            {evento.note && (
+              <div className="text-sm text-slate-600 mt-2 italic">
+                📝 {evento.note}
+              </div>
+            )}
+
+          </div>
+
+        )
+      )}
+
+    </div>
+
+  );
+})
       )}
 
     </div>
