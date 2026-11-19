@@ -469,6 +469,26 @@ const [
 
 });
 
+const sale =
+  [...new Set(
+    eventiGiorno.map(
+      evento => evento.stanza
+    )
+  )];
+
+
+const eOggi =
+  giorno.toDateString() ===
+  new Date().toDateString();
+
+const domani = new Date();
+domani.setDate(
+  domani.getDate() + 1
+);
+
+const eDomani =
+  giorno.toDateString() ===
+  domani.toDateString();
 
     return (
 
@@ -477,19 +497,51 @@ const [
         className="mb-6"
       >
 
-        <h3 className="font-bold text-lg border-b pb-2 mb-3">
+        <h3
+  className={
+    giorno.toDateString() ===
+    new Date().toDateString()
+      ? `
+        font-bold
+        text-lg
+        mb-3
+        rounded-xl
+        p-3
+        bg-green-100
+        text-green-800
+        border
+        border-green-300
+      `
+      : `
+        font-bold
+        text-lg
+        mb-3
+        rounded-xl
+        p-3
+        bg-slate-100
+      `
+  }
+>
 
-          {nomiGiorni[
-            giorno.getDay() === 0
-              ? 6
-              : giorno.getDay() - 1
-          ]}
+  {giorno.toDateString() ===
+  new Date().toDateString()
+    ? `📍 OGGI • ${
+        nomiGiorni[
+          giorno.getDay() === 0
+            ? 6
+            : giorno.getDay() - 1
+        ]
+      } ${giorno.getDate()}`
+    : `📅 ${
+        nomiGiorni[
+          giorno.getDay() === 0
+            ? 6
+            : giorno.getDay() - 1
+        ]
+      } ${giorno.getDate()}`
+  }
 
-          {" "}
-
-          {giorno.getDate()}
-
-        </h3>
+</h3>
 
         {eventiGiorno.length === 0 ? (
 
@@ -499,66 +551,91 @@ const [
 
         ) : (
 
-          eventiGiorno.map((evento) => (
+          sale.map((sala) => {
 
-            <div
-  key={evento.id}
-  onClick={() => {
-
-    setEventoSelezionato(
-      evento
+  const eventiSala =
+    eventiGiorno.filter(
+      evento =>
+        evento.stanza === sala
     );
 
-    setMostraDettaglio(
-      true
-    );
+  return (
 
-  }}
-  className={`
-  ${coloreGruppo(
-    evento.gruppo
-  )}
-  rounded-lg
-  p-3
-  mb-2
-  cursor-pointer
-  border-2
-  border-slate-300
-  shadow-sm
-  transition-all
-  duration-200
-  hover:scale-105
-  hover:shadow-lg
-  active:scale-95
-  
-`}
->
+    <div
+      key={sala}
+      className="mb-4"
+    >
 
-              <div className="font-bold">
-                {evento.gruppo}
-              </div>
+      <h4 className="
+        bg-slate-100
+        rounded-lg
+        px-3
+        py-2
+        font-semibold
+        text-slate-700
+        mb-2
+      ">
+        🏠 {sala}
+      </h4>
 
-              <div>
-                {evento.stanza}
-              </div>
+      {eventiSala.map((evento) => (
 
-              <div>
-                {evento.fasciaOraria}
-              </div>
+        <div
+          key={evento.id}
+          onClick={() => {
+            setEventoSelezionato(
+              evento
+            );
 
-              {evento.note && (
+            setMostraDettaglio(
+              true
+            );
+          }}
+          className={`
+            ${coloreGruppo(
+              evento.gruppo
+            )}
+            rounded-lg
+            p-3
+            mb-2
+            cursor-pointer
+            border-2
+            border-slate-300
+            shadow-sm
+            transition-all
+            duration-200
+            hover:scale-105
+            hover:shadow-lg
+            active:scale-95
+          `}
+        >
 
-                <div className="mt-2 text-sm italic">
+          <div className="font-bold">
+            {evento.gruppo}
+          </div>
 
-                  📝 {evento.note}
+          <div>
+            {evento.fasciaOraria}
+          </div>
 
-                </div>
+          {evento.note && (
 
-              )}
-
+            <div className="mt-2 text-sm italic">
+              📝 {evento.note}
             </div>
 
-          ))
+          )}
+
+        </div>
+
+      ))}
+
+    </div>
+
+  );
+
+})
+
 
         )}
 
